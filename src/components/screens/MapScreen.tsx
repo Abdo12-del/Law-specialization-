@@ -16,10 +16,12 @@ interface MapScreenProps {
 }
 
 const BRANCH_POSITIONS = [
-  'md:end-0 md:top-0 md:w-[32%]',
-  'md:start-0 md:top-1/2 md:w-[32%] md:-translate-y-1/2',
-  'md:end-0 md:bottom-0 md:w-[32%]',
+  'md:right-0 md:top-[1%] md:w-[32%]',
+  'md:right-0 md:bottom-[1%] md:w-[32%]',
+  'md:left-0 md:top-1/2 md:w-[32%] md:-translate-y-1/2',
 ];
+
+const LEGAL_BRANCH_TITLES = ['التحليل الشكلي', 'الأساس القانوني', 'موقف المحكمة وآثار القرار'];
 
 /** خريطة ذهنية تفاعلية: العقدة المركزية تتفرع إلى فصول البحث ومحاورها القابلة للنقر. */
 export function MapScreen({ chapters, slides, currentChapterId, lastSlideId, visited, onSelect }: MapScreenProps) {
@@ -63,13 +65,13 @@ export function MapScreen({ chapters, slides, currentChapterId, lastSlideId, vis
                 <stop offset="100%" stopColor="#a87939" stopOpacity="0.55" />
               </linearGradient>
             </defs>
-            <path d="M500 310 C640 310 640 105 805 105" fill="none" stroke="url(#mindmap-copper)" strokeWidth="3" />
+            <path d="M500 310 C640 310 650 125 805 125" fill="none" stroke="url(#mindmap-copper)" strokeWidth="3" />
+            <path d="M500 310 C640 310 650 495 805 495" fill="none" stroke="url(#mindmap-copper)" strokeWidth="3" />
             <path d="M500 310 C380 310 340 310 195 310" fill="none" stroke="url(#mindmap-copper)" strokeWidth="3" />
-            <path d="M500 310 C640 310 640 515 805 515" fill="none" stroke="url(#mindmap-copper)" strokeWidth="3" />
             <circle cx="500" cy="310" r="8" fill="#d6a65a" />
-            <circle cx="805" cy="105" r="6" fill="#d6a65a" />
+            <circle cx="805" cy="125" r="6" fill="#d6a65a" />
+            <circle cx="805" cy="495" r="6" fill="#d6a65a" />
             <circle cx="195" cy="310" r="6" fill="#d6a65a" />
-            <circle cx="805" cy="515" r="6" fill="#d6a65a" />
           </svg>
         )}
 
@@ -87,7 +89,8 @@ export function MapScreen({ chapters, slides, currentChapterId, lastSlideId, vis
             const ChapterIcon = chapter.icon;
             const isCurrent = chapter.id === currentChapterId;
             const visitedCount = chapter.slides.filter((slide) => visited.includes(slide.id)).length;
-            const branchPosition = BRANCH_POSITIONS[ci] ?? 'md:end-0 md:top-1/2 md:w-[32%] md:-translate-y-1/2';
+            const branchPosition = BRANCH_POSITIONS[ci] ?? 'md:right-0 md:top-1/2 md:w-[32%] md:-translate-y-1/2';
+            const branchTitle = filled && chapters.length === 3 ? LEGAL_BRANCH_TITLES[ci] ?? chapter.title : chapter.title;
 
             return (
               <motion.li
@@ -111,8 +114,8 @@ export function MapScreen({ chapters, slides, currentChapterId, lastSlideId, vis
                       {filled && <span className="text-[11px] font-bold text-amber-300">الفصل {ci + 1} · المحطة {String(ci + 1).padStart(2, '0')}</span>}
                       {isCurrent && filled && <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[10px] font-black text-slate-950">الفصل الحالي</span>}
                     </div>
-                    <h3 className="mt-1 text-base font-extrabold leading-6 text-[#fffaf0] sm:text-lg">{chapter.title}</h3>
-                    {hasText(chapter.subtitle) && <p className="mt-1 text-xs leading-5 text-slate-300/80">{chapter.subtitle}</p>}
+                    <h3 className="mt-1 text-base font-extrabold leading-6 text-[#fffaf0] sm:text-lg">{branchTitle}</h3>
+                    {chapters.length !== 3 && hasText(chapter.subtitle) && <p className="mt-1 text-xs leading-5 text-slate-300/80">{chapter.subtitle}</p>}
                   </div>
                 </div>
 
