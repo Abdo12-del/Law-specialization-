@@ -1,3 +1,6 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useReactFlow } from '@xyflow/react';
 import {
   Background,
   BackgroundVariant,
@@ -36,10 +39,12 @@ type MindMapNodeData =
       chapterIndex: number;
       current: boolean;
       visitedCount: number;
+      focused: boolean;
+      activeSlideId?: string;
       lastSlideId?: string;
       visited: string[];
       filled: boolean;
-      onSelect: (index: number) => void;
+      onSelect: (index: number, chapterId: string) => void;
       slideIndexes: Record<string, number>;
     };
 type MindMapFlowNode = Node<MindMapNodeData, 'mindmap'>;
@@ -67,14 +72,22 @@ function MindMapNodeView({ data }: NodeProps<MindMapFlowNode>) {
     );
   }
 
-  const { chapter, title, chapterIndex, current, visitedCount, lastSlideId, visited, filled, onSelect, slideIndexes } = data;
+  const { chapter, title, chapterIndex, current, visitedCount, focused, activeSlideId, lastSlideId, visited, filled, onSelect, slideIndexes } = data;
   const ChapterIcon = chapter.icon;
   const targetSide = chapterIndex === 2 ? Position.Right : Position.Left;
 
   return (
     <>
       <Handle id="chapter-target" type="target" position={targetSide} className="law-map-handle" />
-      <section className="h-full w-full overflow-hidden rounded-[1.35rem] border border-amber-300/25 bg-gradient-to-br from-[#17283c]/95 to-[#0b1525]/95 p-4 shadow-[0_18px_50px_-32px_rgba(0,0,0,0.9)] sm:p-5">
+      <motion.section
+        animate={{
+          scale: focused ? 1.025 : 1,
+          borderColor: focused ? 'rgba(245,200,118,.9)' : 'rgba(214,166,90,.25)',
+          boxShadow: focused ? '0 0 0 2px rgba(245,200,118,.18), 0 0 40px rgba(214,166,90,.28)' : '0 18px 50px -32px rgba(0,0,0,.9)',
+        }}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        className="h-full w-full overflow-hidden rounded-[1.35rem] border bg-gradient-to-br from-[#17283c]/95 to-[#0b1525]/95 p-4 sm:p-5"
+      >
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/25 bg-[#0b1220]/65 text-amber-300">
             <ChapterIcon className="h-5 w-5" aria-hidden="true" />
@@ -111,10 +124,11 @@ function MindMapNodeView({ data }: NodeProps<MindMapFlowNode>) {
               <button
                 key={slide.id}
                 type="button"
-                onClick={() => onSelect(slideIndexes[slide.id] ?? 0)}
+                onClick={() => onSelect(slideIndexes[slide.id] ?? 0, chapter.id)}
                 aria-label={`${topicTitle || `المحور ${slideIndex + 1}`} — ${chapter.title || `الفصل ${chapterIndex + 1}`}`}
                 className={cn(
                   'nodrag nopan inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-start text-[11px] font-semibold leading-4 transition sm:text-xs',
+                  activeSlideId === slide.id && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-[#111b2a]',
                   isLast
                     ? 'border-amber-300/60 bg-amber-300/15 text-amber-100'
                     : isPlaceholder
@@ -129,7 +143,7 @@ function MindMapNodeView({ data }: NodeProps<MindMapFlowNode>) {
             );
           })}
         </div>
-      </section>
+      </motion.section>
     </>
   );
 }
@@ -137,7 +151,13 @@ function MindMapNodeView({ data }: NodeProps<MindMapFlowNode>) {
 const nodeTypes: NodeTypes = { mindmap: MindMapNodeView };
 
 /** Builds the presentation graph separately so its legal branches and links stay testable. */
-export function createMindMapGraph(props: MapScreenProps, compact = false) {
+export function createMindMapGraph(
+  props: MapScreenProps,
+  compact = false,
+  focusedChapterId?: string,
+  activeSlideId?: string,
+  onSelectTopic?: (index: number, chapterId: string) => void,
+) {
   const { chapters, slides, currentChapterId, lastSlideId, visited, onSelect } = props;
   const filled = chapters.some((chapter) => !isBlankChapter(chapter));
   const slideIndexes = Object.fromEntries(slides.map((slide) => [slide.slide.id, slide.index]));
@@ -171,10 +191,12 @@ export function createMindMapGraph(props: MapScreenProps, compact = false) {
         chapterIndex,
         current: chapter.id === currentChapterId,
         visitedCount: chapter.slides.filter((slide) => visited.includes(slide.id)).length,
+        focused: focusedChapterId === chapter.id,
+        activeSlideId: focusedChapterId === chapter.id ? activeSlideId : undefined,
         lastSlideId,
         visited,
         filled,
-        onSelect,
+        onSelect: onSelectTopic ?? ((index: number) => onSelect(index)),
         slideIndexes,
       },
       style: { width: compact ? 340 : 360, height: 190 },
@@ -190,7 +212,12 @@ export function createMindMapGraph(props: MapScreenProps, compact = false) {
     sourceHandle: compact ? 'root-right-upper' : index === 0 ? 'root-right-upper' : index === 1 ? 'root-right-lower' : 'root-left',
     targetHandle: 'chapter-target',
     type: 'default',
-    style: { stroke: '#c49a58', strokeWidth: 3, opacity: 0.82 },
+    animated: focusedChapterId === chapter.id,
+    style: {
+      stroke: focusedChapterId === chapter.id ? '#f5c876' : '#c49a58',
+      strokeWidth: focusedChapterId === chapter.id ? 4 : 3,
+      opacity: focusedChapterId && focusedChapterId !== chapter.id ? 0.28 : 0.9,
+    },
     selectable: false,
   }));
 
@@ -199,7 +226,33 @@ export function createMindMapGraph(props: MapScreenProps, compact = false) {
 
 function MindMapCanvas(props: MapScreenProps) {
   const compact = typeof window !== 'undefined' && window.innerWidth < 760;
-  const { nodes, edges } = createMindMapGraph(props, compact);
+  const { fitView } = useReactFlow<MindMapFlowNode, Edge>();
+  const [focus, setFocus] = useState<{ chapterId: string; slideId: string } | null>(null);
+  const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (navigationTimer.current) clearTimeout(navigationTimer.current);
+  }, []);
+
+  const focusThenNavigate = useCallback((index: number, chapterId: string) => {
+    if (navigationTimer.current) clearTimeout(navigationTimer.current);
+    const slideId = props.slides[index]?.slide.id ?? '';
+    setFocus({ chapterId, slideId });
+    void fitView({ nodes: [{ id: chapterId }], padding: 0.2, duration: 420 });
+    navigationTimer.current = setTimeout(() => {
+      navigationTimer.current = null;
+      setFocus(null);
+      props.onSelect(index);
+    }, 460);
+  }, [fitView, props.onSelect, props.slides]);
+
+  const { nodes, edges } = createMindMapGraph(
+    props,
+    compact,
+    focus?.chapterId,
+    focus?.slideId,
+    focusThenNavigate,
+  );
 
   return (
     <div className="legal-mindmap relative mt-5 min-h-[560px] flex-1 overflow-hidden rounded-3xl border border-amber-400/15 bg-[#071326]/25" style={{ height: compact ? 850 : '100%' }}>
