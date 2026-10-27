@@ -124,8 +124,12 @@ function MindMapNodeView({ data }: NodeProps<MindMapFlowNode>) {
               <button
                 key={slide.id}
                 type="button"
-                onClick={() => onSelect(slideIndexes[slide.id] ?? 0, chapter.id)}
-                aria-label={`${topicTitle || `المحور ${slideIndex + 1}`} — ${chapter.title || `الفصل ${chapterIndex + 1}`}`}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSelect(slideIndexes[slide.id] ?? 0, chapter.id);
+                }}
+                aria-label={`افتح الشريحة: ${topicTitle || `المحور ${slideIndex + 1}`} — ${chapter.title || `الفصل ${chapterIndex + 1}`}`}
                 className={cn(
                   'nodrag nopan inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-start text-[11px] font-semibold leading-4 transition sm:text-xs',
                   activeSlideId === slide.id && 'ring-2 ring-amber-200/80 ring-offset-2 ring-offset-[#111b2a]',
