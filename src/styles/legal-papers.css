@@ -1,0 +1,31 @@
+/* خلفية قانونية ليلية مرسومة — تظهر كخلفية كاملة لجميع الشاشات والشرائح. */
+.legal-stage[data-paper='midnight'] {
+  --law-paper:#0a1930;
+  --law-paper-deep:#10233b;
+  --law-ink:#f5f1e8;
+  --law-muted:#c2ccd7;
+  --law-line:rgba(230,236,243,.2);
+  --law-white:#f8f5ed;
+  color:#f5f1e8 !important;
+  background-color:#08172d !important;
+  background-image:linear-gradient(90deg,rgba(6,17,33,.14),rgba(6,17,33,.08)),url('/backgrounds/legal-midnight.png');
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+}
+.legal-stage[data-paper='midnight'] [class~="bg-slate-950"] { background-color:rgba(8,23,45,.48) !important; }
+.legal-stage[data-paper='midnight'] [class~="bg-slate-950/40"] { background-color:rgba(8,23,45,.55) !important; }
+.legal-stage[data-paper='midnight'] [class~="text-slate-100"],.legal-stage[data-paper='midnight'] [class~="text-slate-200"] { color:#f5f1e8 !important; }
+.legal-stage[data-paper='midnight'] [class~="text-slate-300"],.legal-stage[data-paper='midnight'] [class~="text-slate-400"],.legal-stage[data-paper='midnight'] [class~="text-slate-500"] { color:#c2ccd7 !important; }
+.legal-stage[data-paper='midnight'] [class*="border-white/"] { border-color:rgba(230,236,243,.2) !important; }
+.legal-stage[data-paper='midnight'] [class*="bg-white/[0.04]"],.legal-stage[data-paper='midnight'] [class*="bg-white/[0.06]"],.legal-stage[data-paper='midnight'] [class*="bg-white/[0.07]"] { background-color:rgba(8,23,45,.68) !important; }
+.legal-stage[data-paper='midnight'] [class*="text-amber-"] { color:#dfbd83 !important; }
+.legal-stage[data-paper='midnight'] [class*="border-amber-"] { border-color:rgba(223,189,131,.4) !important; }
+.legal-stage[data-paper='midnight'] [class*="bg-amber-400"] { background-color:#b18b55 !important; color:#10233b !important; }
+.legal-stage[data-paper='midnight'] [class*="bg-amber-300"] { background-color:#c5a26b !important; }
+.legal-stage[data-paper='midnight'] [class*="bg-sky-"] { background-color:rgba(23,50,77,.72) !important; }
+.legal-stage[data-paper='midnight'] [class*="text-sky-"] { color:#d7e1eb !important; }
+.legal-stage[data-paper='midnight'] [class*="border-sky-"] { border-color:rgba(190,208,226,.26) !important; }
+.legal-stage[data-paper='midnight'] [class*="bg-gradient-to-b"] { background-image:linear-gradient(180deg,rgba(13,34,57,.9),rgba(8,23,45,.86)) !important; }
+.legal-stage[data-paper='midnight'] .legal-cover::before { border-color:rgba(233,218,190,.32); }
+.legal-stage[data-paper='midnight'] .legal-cover::after { background:linear-gradient(transparent,rgba(177,139,85,.65) 18%,rgba(177,139,85,.65) 82%,transparent); }
