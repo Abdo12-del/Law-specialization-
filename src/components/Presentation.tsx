@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PresentationData } from '@/types/presentation';
@@ -15,7 +15,7 @@ import { ControlBar } from '@/components/chrome/ControlBar';
 import { KeyboardHelp } from '@/components/chrome/KeyboardHelp';
 import { TitleScreen } from '@/components/screens/TitleScreen';
 import { PrefaceScreen } from '@/components/screens/PrefaceScreen';
-import { MapScreen } from '@/components/screens/MapScreen';
+const MapScreen = lazy(() => import('@/components/screens/MapScreen').then((module) => ({ default: module.MapScreen })));
 import { SlideScreen } from '@/components/screens/SlideScreen';
 import { FinalScreen } from '@/components/screens/FinalScreen';
 import { useChalkboard } from '@/chalkboard/useChalkboard';
@@ -175,14 +175,16 @@ export function Presentation({ data }: { data: PresentationData }) {
           return <PrefaceScreen steps={data.preface} step={s.step} onGoto={(step) => ctrl.goto({ kind: 'preface', step })} />;
         case 'map':
           return (
-            <MapScreen
-              chapters={data.chapters}
-              slides={ctrl.slides}
-              currentChapterId={ctrl.currentChapterId}
-              lastSlideId={lastSlideId}
-              visited={ctrl.visited}
-              onSelect={ctrl.gotoSlide}
-            />
+            <Suspense fallback={<div className="grid h-full place-items-center text-sm text-slate-400">جارٍ إعداد الخريطة الذهنية…</div>}>
+              <MapScreen
+                chapters={data.chapters}
+                slides={ctrl.slides}
+                currentChapterId={ctrl.currentChapterId}
+                lastSlideId={lastSlideId}
+                visited={ctrl.visited}
+                onSelect={ctrl.gotoSlide}
+              />
+            </Suspense>
           );
         case 'slide':
           return ctrl.slides[s.index] ? <SlideScreen item={ctrl.slides[s.index]} /> : null;

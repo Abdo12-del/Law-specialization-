@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Info, Layers } from 'lucide-react';
 import { blankPresentation as presentation } from '@/data/blank-template';
+import { presentation as legalPresentation } from '@/data/presentation';
 import { flattenSlides } from '@/lib/navigation';
 import type { ChapterData, PresentationData } from '@/types/presentation';
 import { Presentation } from '@/components/Presentation';
 import { TitleScreen } from '@/components/screens/TitleScreen';
 import { PrefaceScreen } from '@/components/screens/PrefaceScreen';
-import { MapScreen } from '@/components/screens/MapScreen';
+import { createMindMapGraph, MapScreen } from '@/components/screens/MapScreen';
 import { SlideScreen } from '@/components/screens/SlideScreen';
 import { FinalScreen } from '@/components/screens/FinalScreen';
 
@@ -44,17 +45,17 @@ describe('القالب الأبيض: لا نصّ على أي شاشة (تبقى 
     });
   });
 
-  it('الخريطة تعرض كل الفصول والمحاور كأيقونات وأرقام فقط', () => {
-    const html = renderToStaticMarkup(
-      <MapScreen chapters={presentation.chapters} slides={slides} visited={[]} onSelect={noop} currentChapterId="ch1" />,
-    );
-    const text = visibleText(html);
-    expect(onlyCounters(text), text).toBe(true);
+  it('الخريطة البيضاء ترسم لوحة React Flow بلا عناوين، وتحتفظ بفروعها وروابطها', () => {
+    const props = { chapters: presentation.chapters, slides, visited: [], onSelect: noop, currentChapterId: 'ch1' };
+    const html = renderToStaticMarkup(<MapScreen {...props} />);
+    const graph = createMindMapGraph(props);
+    expect(html).toContain('aria-label="الخريطة الذهنية لتحليل القرار القضائي"');
+    expect(html).toContain('react-flow__controls');
     expect(html).not.toContain('خريطة العرض');
     expect(html).not.toContain('الفصل الحالي');
-    expect(html).not.toContain('فارغة');
-    // عدد الأزرار = عدد الشرائح (كل محور عقدة قابلة للنقر)
-    expect(html.match(/<button/g)).toHaveLength(slides.length);
+    expect(graph.nodes).toHaveLength(presentation.chapters.length + 1);
+    expect(graph.edges).toHaveLength(presentation.chapters.length);
+    expect(graph.filled).toBe(false);
   });
 
   it.each(slides.map((s) => [s.slide.id, s] as const))('الشريحة %s بيضاء: عدّاد فقط بلا عنوان ولا محتوى', (_id, item) => {
@@ -124,12 +125,34 @@ describe('العرض المعبّأ: النصوص والشارات تظهر تل
     for (const t of ['المقدمة', 'الإشكالية', 'الأهداف', 'خطوة المقدمة 2', 'الخطوة 2 من 4', 'محتوى الخطوة']) expect(html).toContain(t);
   });
 
-  it('الخريطة تعرض الرأس والفصل الحالي وعناوين المحاور وتُعلّم الشريحة البيضاء', () => {
-    const html = renderToStaticMarkup(
-      <MapScreen chapters={filled.chapters} slides={filledSlides} visited={[]} onSelect={noop} currentChapterId="ch1" />,
-    );
-    for (const t of ['خريطة العرض', 'الفصل الحالي', 'الفصل 1', 'الدراسة التمهيدية', 'ما واقع المؤسسة؟', 'تعريف المؤسسة', 'فارغة'])
-      expect(html).toContain(t);
+  it('الخريطة المعبّأة تعرض غلافها، ويحمل نموذج العقد الفصول والمحاور القابلة للنقر', () => {
+    const props = { chapters: filled.chapters, slides: filledSlides, visited: [], onSelect: noop, currentChapterId: 'ch1' };
+    const html = renderToStaticMarkup(<MapScreen {...props} />);
+    const graph = createMindMapGraph(props);
+    const branch = graph.nodes.find((node) => node.id === 'ch1');
+    expect(html).toContain('خريطة العرض');
+    expect(html).toContain('aria-label="الخريطة الذهنية لتحليل القرار القضائي"');
+    expect(branch?.data.kind).toBe('chapter');
+    if (branch?.data.kind === 'chapter') {
+      expect(branch.data.title).toBe('الدراسة التمهيدية');
+      expect(branch.data.current).toBe(true);
+      expect(branch.data.chapter.slides).toHaveLength(4);
+    }
+    expect(graph.edges[0].target).toBe('ch1');
+  });
+
+  it('خريطة القرار تتوزع كفروع ذهنية متوازنة على المكتب والهاتف', () => {
+    const legalSlides = flattenSlides(legalPresentation.chapters);
+    const props = { chapters: legalPresentation.chapters, slides: legalSlides, visited: [], onSelect: noop };
+    const desktop = createMindMapGraph(props);
+    const mobile = createMindMapGraph(props, true);
+    const branchNodes = desktop.nodes.filter((node) => node.data.kind === 'chapter');
+    expect(branchNodes.map((node) => node.data.kind === 'chapter' ? node.data.title : '')).toEqual([
+      'التحليل الشكلي', 'الأساس القانوني', 'موقف المحكمة وآثار القرار',
+    ]);
+    expect(branchNodes[0].position.x).toBeGreaterThan(branchNodes[2].position.x);
+    expect(branchNodes[1].position.y).toBeGreaterThan(branchNodes[0].position.y);
+    expect(mobile.nodes.filter((node) => node.data.kind === 'chapter').map((node) => node.position.y)).toEqual([150, 370, 590]);
   });
 
   it('الشريحة تعرض شارة الفصل وعنوانها وعنوانها الفرعي ومحتواها', () => {

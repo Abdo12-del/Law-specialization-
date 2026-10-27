@@ -42,6 +42,17 @@
 .legal-stage h1, .legal-stage h2, .legal-stage h3 { color: var(--law-ink); letter-spacing: -.025em; }
 .legal-stage h1 { font-family: var(--font-display); }
 
+/* React Flow canvas — keep the library controls and connection handles in the same legal palette. */
+.legal-mindmap .react-flow__controls { overflow:hidden; border:1px solid rgba(214,166,90,.35); border-radius:1rem; background:rgba(11,21,37,.94); box-shadow:0 12px 30px -18px rgba(0,0,0,.7); }
+.legal-mindmap .react-flow__controls-button { display:flex; align-items:center; justify-content:center; width:2rem; height:2rem; border-bottom:1px solid rgba(255,255,255,.1); background:transparent; fill:#d6a65a; }
+.legal-mindmap .react-flow__controls-button:hover { background:rgba(214,166,90,.12); }
+.legal-mindmap .react-flow__controls-button:last-child { border-bottom:0; }
+.legal-mindmap .react-flow__attribution { padding:.15rem .35rem; border:1px solid rgba(214,166,90,.18); border-radius:.45rem; background:rgba(11,21,37,.8); color:#d9c9aa; font-size:.58rem; }
+.legal-mindmap .react-flow__attribution a { color:#d6a65a; }
+.legal-mindmap .law-map-handle { width:.7rem; height:.7rem; border:2px solid #101b2d; border-radius:50%; background:#d6a65a; }
+.legal-mindmap .react-flow__edge-path { stroke-linecap:round; filter:drop-shadow(0 0 4px rgba(196,154,88,.2)); }
+.legal-mindmap .react-flow__background-pattern.dots { fill:rgba(196,154,88,.42); }
+
 /* Opening canvas: a quiet editorial folio frame, visible even while data is still blank. */
 .legal-cover::before { content:""; position:absolute; inset:7% 5%; border:1px solid rgba(29,41,56,.13); pointer-events:none; }
 .legal-cover::after { content:""; position:absolute; inset-inline-start:8%; inset-block:16% 16%; width:1px; background:linear-gradient(transparent,rgba(177,139,85,.55) 18%,rgba(177,139,85,.55) 82%,transparent); pointer-events:none; }
